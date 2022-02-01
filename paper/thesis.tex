@@ -75,7 +75,7 @@ programming frameworks. IBM has created Qiskit, a Python framework that
 supports prototyping and executing quantum algorithms on simulators and quantum
 hardware. ORNL is currently developing QCOR, a heterogenous classical-quantum
 framework that aims to use quantum computers as accelerators akin to GPUs
-\cite{mintz_qcor_2020}.  However, no substantial work has been done to evaluate
+\cite{mintz_qcor_2020}. However, no substantial work has been done to evaluate
 the efficacy of these programming frameworks in developing quantum-based
 systems.
 
@@ -639,7 +639,7 @@ associated with gate count, qubit count, and circuit depth for the oracle
 transpilation and overall circuit transpilation respectively. After
 transpilation, the Qiskit compiler decomposes higher-level gates to match the
 gate set supported by the backend. We see that the qubit count rises to more
-than 4000 for even small matrices of order 32. Further, transpilation onto the
+than 1000 for even small matrices of order 32. Further, transpilation onto the
 Aer backend added gates that we not part of the high-level design (like $U_2$
 and $U_3$). This results in a large increase in the number of quantum
 operations performed. The transpilation time rises exponentially with an
