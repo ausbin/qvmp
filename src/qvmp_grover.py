@@ -236,21 +236,22 @@ qc.draw(fold=-1)
 
 print("Num qubits = ", qc.num_qubits)
 
-
 backend = AerSimulator(
+    # max_memory_mb=2**38
+    device="GPU",
     method="matrix_product_state"
 )
+
+print(backend.available_devices())
+
 transpiled_qobj = transpile(
-        qc,
-        backend=backend,
-        layout_method='trivial',
-        routing_method='basic'
-        )
+    qc,
+    backend=backend,
+)
 print("Circuit transpiled")
 qobj = assemble(transpiled_qobj, backend=backend, shots=1024)
 print("Circuit assembled")
 result = backend.run(qobj).result()
-
 
 # In[14]:
 
