@@ -1,13 +1,8 @@
 \scalebox{1.0}{
 \Qcircuit @C=1.0em @R=0.2em @!R { \\
-	 	\nghost{{address}_{0} :  } & \lstick{{address}_{0} :  } &
-        \gate{\mathrm{H}} \barrier[0em]{10} & \qw &
-        \multigate{10}{\mathrm{db}}_<<<{0} & \qw & \qw & \qw &
-        \multigate{10}{\mathrm{db^{\dagger}}}_<<<{0} \barrier[0em]{10} & \qw & \multigate{1}{\mathrm{diffuser}}_<<<{0} \barrier[0em]{10} & \qw & \meter & \qw & \qw & \qw\\
+	 	\nghost{{address}_{0} :  } & \lstick{{address}_{0} :  } & \gate{\mathrm{H}} \barrier[0em]{10} & \qw & \multigate{10}{\mathrm{db}}_<<<{0} & \qw & \qw & \qw & \multigate{10}{\mathrm{db\_dg}}_<<<{0} \barrier[0em]{10} & \qw & \multigate{1}{\mathrm{diffuser}}_<<<{0} \barrier[0em]{10} & \qw & \meter & \qw & \qw & \qw\\
 	 	\nghost{{address}_{1} :  } & \lstick{{address}_{1} :  } & \gate{\mathrm{H}} & \qw & \ghost{\mathrm{db}}_<<<{1} & \qw & \qw & \qw & \ghost{\mathrm{db\_dg}}_<<<{1} & \qw & \ghost{\mathrm{diffuser}}_<<<{1} & \qw & \qw & \meter & \qw & \qw\\
-	 	\nghost{{a}_{0} :  } & \lstick{{a}_{0} :  } & \qw & \qw &
-        \ghost{\mathrm{db}}_<<<{2} & \multigate{8}{\mathrm{dot}}_<<<{0} & \qw &
-        \multigate{8}{\mathrm{dot^{\dagger}}}_<<<{0} & \ghost{\mathrm{db\_dg}}_<<<{2} & \qw & \qw & \qw & \qw & \qw & \qw & \qw\\
+	 	\nghost{{a}_{0} :  } & \lstick{{a}_{0} :  } & \qw & \qw & \ghost{\mathrm{db}}_<<<{2} & \multigate{8}{\mathrm{dot}}_<<<{0} & \qw & \multigate{8}{\mathrm{dot\_dg}}_<<<{0} & \ghost{\mathrm{db\_dg}}_<<<{2} & \qw & \qw & \qw & \qw & \qw & \qw & \qw\\
 	 	\nghost{{a}_{1} :  } & \lstick{{a}_{1} :  } & \qw & \qw & \ghost{\mathrm{db}}_<<<{3} & \ghost{\mathrm{dot}}_<<<{1} & \qw & \ghost{\mathrm{dot\_dg}}_<<<{1} & \ghost{\mathrm{db\_dg}}_<<<{3} & \qw & \qw & \qw & \qw & \qw & \qw & \qw\\
 	 	\nghost{{a}_{2} :  } & \lstick{{a}_{2} :  } & \qw & \qw & \ghost{\mathrm{db}}_<<<{4} & \ghost{\mathrm{dot}}_<<<{2} & \qw & \ghost{\mathrm{dot\_dg}}_<<<{2} & \ghost{\mathrm{db\_dg}}_<<<{4} & \qw & \qw & \qw & \qw & \qw & \qw & \qw\\
 	 	\nghost{{a}_{3} :  } & \lstick{{a}_{3} :  } & \qw & \qw & \ghost{\mathrm{db}}_<<<{5} & \ghost{\mathrm{dot}}_<<<{3} & \qw & \ghost{\mathrm{dot\_dg}}_<<<{3} & \ghost{\mathrm{db\_dg}}_<<<{5} & \qw & \qw & \qw & \qw & \qw & \qw & \qw\\

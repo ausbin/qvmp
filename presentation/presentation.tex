@@ -132,7 +132,7 @@ def find_row_mismatch(A, y, z):
   \begin{itemize}
     \item The above snippet is encoded as a quantum circuit and constitutes
       the oracle
-    \item QROM is used for efficiently encoding the matrix
+    \item QROM is used to efficiently encode the matrix
     \item Out-of-place inner product performs the row-vector multiplication
   \end{itemize}
 \end{frame}
@@ -160,8 +160,8 @@ def find_row_mismatch(A, y, z):
       \begin{subfigure}{\textwidth}
         \centering
         \input{assets/qrom_4x4.tex}
-        \caption{QROM encoding for a $4 \times 4$ matrix}
       \end{subfigure}
+      \caption{QROM encoding of a $4 \times 4$ matrix $A$}
       \label{fig:qrom_4x4}
   \end{figure}
 \end{frame}
@@ -175,7 +175,7 @@ def find_row_mismatch(A, y, z):
   \begin{figure}
     \centering
     \input{assets/inner_product.tex}
-    \caption{Inner product circuit for a $2D$ vectors}
+    \caption{Inner product circuit for $2$-D vectors}
     \label{fig:inner_product}
   \end{figure}
 \end{frame}
