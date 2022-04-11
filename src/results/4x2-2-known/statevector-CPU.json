@@ -1,0 +1,1 @@
+{"transpilation_time": 0.008360501378774643, "simulation_time": 9.134318679571152e-05, "gate_counts_before_transpilation": {"u2": 2, "barrier": 2, "measure": 2, "u3": 1}, "gate_counts_after_transpilation": {"h": 2, "barrier": 2, "measure": 2, "x": 1}, "circuit_depth_before_transpilation": 2, "circuit_depth_after_transpilation": 2, "qubit_count": 7, "num_grover_iterations": 0}

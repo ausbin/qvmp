@@ -52,7 +52,7 @@ def get_results(dims, num_incorrect, num_solutions_are_known, output_dir, timeit
 
         transpilation_times = timeit.repeat(lambda: transpile(qc, backend),
                 repeat=timeit_repeat, number=timeit_number)
-        simulation_times = timeit.repeat(lambda: backend.run(qobj),
+        simulation_times = timeit.repeat(lambda: backend.run(qobj).result(),
                 repeat=timeit_repeat, number=timeit_number)
 
         decomposed_qc = qc.decompose()
