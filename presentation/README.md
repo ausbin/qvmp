@@ -4,12 +4,8 @@ A beamer theme
 
 ## Dependencies
 
-- A TeX installation that includes [LuaTeX](http://www.luatex.org/)
-    - You also need [latexmk](https://www.ctan.org/pkg/latexmk/) if you want to use the provided Makefile
+- A TeX installation
 - LaTeX package dependencies including [beamer](https://github.com/josephwright/beamer) (these usually come with your TeX installation, but if not, you can get them from [CTAN](https://ctan.org/))
-- Fonts
-  - Playfair Display
-  - Hack
 
 ## Usage
 
