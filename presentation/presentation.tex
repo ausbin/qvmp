@@ -18,31 +18,50 @@
 \end{frame}
 
 
-% Outline
+\begin{frame}{Motivation}
+  \begin{itemize}
+    \item Grover search: popular quantum search algorithm
+    \item Depends on a black-box oracle to perform the search
+    \item Offers quadratic speedup over classical linear search with a
+      runtime of $O(\sqrt{N})$
+  \end{itemize}
+  \begin{figure}
+    \centering
+    \includegraphics[width=0.7\textwidth]{assets/grover_operator.png}
+    \caption{Grover operator circuit}
+    \label{fig:grover_operator_circuit}
+  \end{figure}
+\end{frame}
 
-% Main contributions
-% Grover search
-  % Oracles - blackbox
-  % Main difficulty is porting classical functions to quantum
-    % What are the challenges?
-  % Why is this useful to study?
-  % Related: Amplitude Amplification
-% QVMP
-  % Algorithm - runtime and overview
-  % Implementation details
-    % QROM
-    % Inner product
-    % Circuit metrics
-    % Transpilation times
-% Future work
-  % Automatic synthesis of Grover oracles from classical decision functions
-    % Support for linear algebra operations
-    % Integration with formal verification tooling
-  % Investigate more efficient encodings of matrices and related operations
-  % Investigate bottle-necks in transpilation
-    % Cursory investigation revealed transpiler spends time performing SWAPs
-    % which do not seem to be needed for fully connected qubit maps
-  
+
+\begin{frame}{Motivation (contd)}
+  \begin{itemize}
+    \item Core of Grover search straightforward to implement
+    \item {
+      Main challenge: encoding the oracle as a quantum circuit
+      % \begin{itemize}
+      %   \item Debugging oracles is tricky due to non-determinism
+      %   \item How to verify correctness?
+      % \end{itemize}
+    }
+    \item {
+      QVMP
+      \begin{itemize}
+        \item Quantum Verification of Matrix Products
+        \item Offers quadratic speed-up over classical VMP
+        \item Used in HPC applications
+        \item Algorithm uses Grover search as a sub-routine
+      \end{itemize}
+    }
+  \end{itemize}
+
+  \begin{alertblock}{Goal}
+    Implement QVMP to better understand these challenges, determine feasibility
+    of use, and investigate enhancements into oracle encoding
+  \end{alertblock}
+\end{frame}
+
+
 \begin{frame}{Main contributions}
   \begin{itemize}
     \item Working implementation of QVMP in Qiskit
@@ -51,33 +70,6 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Motivation}
-  \begin{itemize}
-    \item Grover search: popular quantum search algorithm
-    \item Depends on a black-box oracle to perform the search
-    \item Offers quadratic speedup over classical linear search with a
-      runtime of $O(\sqrt{N})$
-    \item Related: Amplitude amplfication, a generalization of Grover search
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Motivation (contd)}
-  \begin{itemize}
-    \item Core of Grover search straightforward to implement
-    \item {
-      Main challenge: encoding the oracle as a quantum circuit
-      \begin{itemize}
-        \item Debugging oracles is tricky due to non-determinism
-        \item How to verify correctness?
-      \end{itemize}
-    }
-  \end{itemize}
-
-  \begin{alertblock}{Goal}
-    Implement QVMP to better understand these challenges and investigate
-    enhancements
-  \end{alertblock}
-\end{frame}
 
 \begin{frame}{QVMP}
   \begin{itemize}
@@ -93,6 +85,8 @@
   \end{itemize}
 \end{frame}
 
+
+% TODO replace this with a picture
 \begin{frame}{QVMP Algorithm}
 \begin{algorithm}[H]
   \caption{Quantum VMP using Grover Search}
@@ -117,6 +111,7 @@
 \end{algorithm}
 \end{frame}
 
+
 \begin{frame}[fragile]{QVMP Implementation}
   \begin{lstlisting}[frame=single,language=Python, numbers=left]
 # QVMP oracle described using a classical function
@@ -136,6 +131,7 @@ def find_row_mismatch(A, y, z):
     \item Out-of-place inner product performs the row-vector multiplication
   \end{itemize}
 \end{frame}
+
 
 \begin{frame}{QROM - Quantum Read-only Memory}
   \begin{itemize}
@@ -166,19 +162,21 @@ def find_row_mismatch(A, y, z):
   \end{figure}
 \end{frame}
 
-\begin{frame}{Inner product}
-  \begin{itemize}
-    \item Computes the inner product between two binary vectors using $2n + 1$
-      qubits
-    \item Outputs the result in a separate qubit
-  \end{itemize}
-  \begin{figure}
-    \centering
-    \input{assets/inner_product.tex}
-    \caption{Inner product circuit for $2$-D vectors}
-    \label{fig:inner_product}
-  \end{figure}
-\end{frame}
+
+% \begin{frame}{Inner product}
+%   \begin{itemize}
+%     \item Computes the inner product between two binary vectors using $2n + 1$
+%       qubits
+%     \item Outputs the result in a separate qubit
+%   \end{itemize}
+%   \begin{figure}
+%     \centering
+%     \input{assets/inner_product.tex}
+%     \caption{Inner product circuit for $2$-D vectors}
+%     \label{fig:inner_product}
+%   \end{figure}
+% \end{frame}
+
 
 \begin{frame}{QVMP oracle}
   \begin{figure}
@@ -189,7 +187,32 @@ def find_row_mismatch(A, y, z):
   \end{figure}
 \end{frame}
 
-\begin{frame}{Sample execution}
+
+\begin{frame}{Evaluation}
+  \begin{itemize}
+    \item Aer simulator provided by Qiskit
+    \item Rudimentary noise model
+    \item {
+        Testbench specs
+        \begin{itemize}
+          \item AMD EPYC 7502 32-Core Processor, 1498.333 MHz
+          \item 128 CPUs
+          \item x86\_64 architecture
+        \end{itemize}
+    }
+    \item {
+        Simulation methods
+        \begin{itemize}
+          \item Statevector: Dense statevector simulation, limited by size
+          \item Matrix product state (MPS): Tensor-network statevector simulator,
+            doesn't model entire quantum state
+        \end{itemize}
+    }
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}{Evaluation - Demonstrating correct functionality}
   \begin{itemize}
     \item \textbf{Input:} $16 \times 16$ matrix $A$ and two vectors $y$ and $z$
       with $(Ay \neq z)_j$ for $j \in \{0, 5, 4\}$
@@ -203,54 +226,129 @@ def find_row_mismatch(A, y, z):
   \end{figure}
 \end{frame}
 
-% TODO insert circuit metrics
-% TODO insert transpilation and simulation times
 
-\begin{frame}[t,fragile]{Future work}
+\begin{frame}{Evaluation - Circuit metrics}
+  \begin{table}
+    \centering
+    \begin{subtable}{\textwidth}
+      \resizebox{\textwidth}{!}{%
+      \begin{tabular}{|c|c||c|c|c|c|c||c|c|c|} 
+        \hline
+        Dimension & Row mismatches & ccx & cx & x & h & z & Circuit Depth & Qubit count & Gate count \\
+        \hline
+        (4,4) & 1 & 30 & 1 & 11 & 2 & 1 & 44 & 11 & 49 \\
+        (16,8) & 2 & 32 & 10108 & 69 & 284 & 2 & 16993 & 21 & 21494 \\
+        (32,4) & 2 & 24 & 42060 & 204 & 461 & 3 & 69510 & 14 & 85299 \\
+        (64,8) & 3 & 48 & 300324 & 401 & 1602 & 3 & 497172 & 23 & 604329 \\
+        \hline
+      \end{tabular}}
+      \caption{MPS}
+      \label{table:circuit_metrics_mps}
+    \end{subtable}
+
+    \begin{subtable}{\textwidth}
+      \resizebox{\textwidth}{!}{%
+      \begin{tabular}{|c|c||c|c|c|c|c||c|c|c|} 
+        \hline
+        Dimension & Row mismatches & ccx & cx & x & h & z & Circuit Depth & Qubit count & Gate count \\
+        \hline
+        (4,4) & 1 & 30 & 1 & 11 & 2 & 1 & 44 & 11 & 49 \\	
+        (16,8) & 2 & 32 & 0 & 76 & 4 & 2 & 385 & 21 & 130 \\	
+        (32,4) & 2 & 24 & 0 & 208 & 5 & 3 & 684 & 14 & 270 \\
+        (64,8) & 3 & 48 & 0 & 405 & 6 & 3 & 2040 & 23 & 498 \\	
+        \hline
+      \end{tabular}}
+      \caption{Statevector}
+      \label{table:circuit_metrics_statevector_cpu}
+    \end{subtable}
+    \caption{Circuit metrics for MPS and statevector simulation methods on
+    select dimensions}
+    \label{table:circuit_metrics}
+  \end{table}
+\end{frame}
+
+
+\begin{frame}{Evaluation - Transpilation vs Simulation times}
+  \begin{figure}
+    \begin{subfigure}{0.48\textwidth}
+      \centering
+      \includegraphics[width=1.1\textwidth]{
+          ../src/results/circuit_depth_v_tran_time_and_sim_time-MPS.pdf
+      }
+      \caption{MPS}
+      \label{fig:circuit_depth_v_tran_time_and_sim_time-MPS}
+    \end{subfigure}
+    \begin{subfigure}{0.48\textwidth}
+      \centering
+      \includegraphics[width=1.1\textwidth]{
+          ../src/results/circuit_depth_v_tran_time_and_sim_time-statevector_cpu.pdf
+      }
+      \caption{Statevector}
+      \label{fig:circuit_depth_v_tran_time_and_sim_time-statevector_cpu}
+    \end{subfigure}
+    \caption{Circuit depth vs Transpilation/Simulation time}
+  \end{figure}
+\end{frame}
+
+
+\begin{frame}{Future work}
   \begin{exampleblock}{Automated synthesis of oracles}
     Extend existing work on reversible compilers to support higher-level
     programming constructs like lists, records, multi-dimensional arrays
   \end{exampleblock}
-  \begin{itemize}
-    \item Encoding classical decision functions into quantum circuits is
-      error-prone and cumbersome
-    \item Previous work (REVS, Quipper) have shown that we can automate
-      classical to reversible compilation
-  \end{itemize}
-  \begin{lstlisting}[frame=single,language=ML, numbers=left]
-(* Example program describing the QVMP oracle *)
-
-[@@oracle]
-let find_row_mismatch a y z =
-  find_idx (fun idx value -> value <> z[idx]) (a * y)
-  \end{lstlisting}
-\end{frame}
-
-\begin{frame}[t]{Future work (contd)}
   \begin{exampleblock}{Better encoding of matrices}
     Investigate more efficient encodings of matrices and related operations
   \end{exampleblock}
-
-  \begin{itemize}
-    \item $n$-qubit quantum system can encode a total of $2^n$ states
-    \item QROM is still linear in space complexity
-    \item Alternative approach encodes the entries of the matrix as amplitudes
-      of the quantum system but is harder to work with
-  \end{itemize}
-\end{frame}
-
-\begin{frame}[t]{Future work (contd)}
   \begin{exampleblock}{Transpilation time bottlenecks}
     Investigate bottle-necks in transpilation
   \end{exampleblock}
-  \begin{itemize}
-    \item Transpilation becomes exponentially slow as the number of qubits
-      increases
-    \item Makes it harder to scale and test circuit implementations
-    \item Cursory investigation into Qiskit's transpile method revealed that
-      SWAPs may be the bottleneck
-  \end{itemize}
 \end{frame}
+
+% \begin{frame}[t,fragile]{Future work}
+%   \begin{exampleblock}{Automated synthesis of oracles}
+%     Extend existing work on reversible compilers to support higher-level
+%     programming constructs like lists, records, multi-dimensional arrays
+%   \end{exampleblock}
+%   \begin{itemize}
+%     \item Encoding classical decision functions into quantum circuits is
+%       error-prone and cumbersome
+%     \item Previous work (REVS, Quipper) have shown that we can automate
+%       classical to reversible compilation
+%   \end{itemize}
+%   \begin{lstlisting}[frame=single,language=ML, numbers=left]
+% (* Example program describing the QVMP oracle *)
+% 
+% [@@oracle]
+% let find_row_mismatch a y z =
+%   find_idx (fun idx value -> value <> z[idx]) (a * y)
+%   \end{lstlisting}
+% \end{frame}
+% 
+% \begin{frame}[t]{Future work (contd)}
+%   \begin{exampleblock}{Better encoding of matrices}
+%     Investigate more efficient encodings of matrices and related operations
+%   \end{exampleblock}
+% 
+%   \begin{itemize}
+%     \item $n$-qubit quantum system can encode a total of $2^n$ states
+%     \item QROM is still linear in space complexity
+%     \item Alternative approach encodes the entries of the matrix as amplitudes
+%       of the quantum system but is harder to work with
+%   \end{itemize}
+% \end{frame}
+% 
+% \begin{frame}[t]{Future work (contd)}
+%   \begin{exampleblock}{Transpilation time bottlenecks}
+%     Investigate bottle-necks in transpilation
+%   \end{exampleblock}
+%   \begin{itemize}
+%     \item Transpilation becomes exponentially slow as the number of qubits
+%       increases
+%     \item Makes it harder to scale and test circuit implementations
+%     \item Cursory investigation into Qiskit's transpile method revealed that
+%       SWAPs may be the bottleneck
+%   \end{itemize}
+% \end{frame}
 
 \begin{frame}{End of talk}
   \begin{centering}
