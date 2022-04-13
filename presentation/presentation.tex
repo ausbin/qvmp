@@ -2,7 +2,7 @@
 
 \usetheme{simear}
 
-\title{Implementing QVMP using QROM}
+\title{An Implementation of the Quantum Verification of Matrix Products algorithm}
 \author{Elton Pinto}
 \date{\today}
 
@@ -62,13 +62,13 @@
 \end{frame}
 
 
-\begin{frame}{Main contributions}
-  \begin{itemize}
-    \item Working implementation of QVMP in Qiskit
-    \item Circuit metrics (gate count, circuit depth)
-    \item Transpilation and simulation times
-  \end{itemize}
-\end{frame}
+% \begin{frame}{Main contributions}
+%   \begin{itemize}
+%     \item Working implementation of QVMP in Qiskit
+%     \item Circuit metrics (gate count, circuit depth)
+%     \item Transpilation and simulation times
+%   \end{itemize}
+% \end{frame}
 
 
 \begin{frame}{QVMP}
@@ -141,22 +141,7 @@ def find_row_mismatch(A, y, z):
   \end{itemize}
   \begin{figure}
       \centering
-      \scalebox{0.8}{
-      \begin{minipage}{\textwidth}
-          \begin{equation*}
-            A = \begin{bmatrix}%
-              0 & 1 & 0 & 1 \\
-              1 & 1 & 1 & 0 \\
-              1 & 0 & 0 & 1 \\
-              1 & 0 & 1 & 0 \\
-            \end{bmatrix}
-          \end{equation*}
-      \end{minipage}
-      }
-      \begin{subfigure}{\textwidth}
-        \centering
-        \input{assets/qrom_4x4.tex}
-      \end{subfigure}
+      \input{../results/figures/qrom_4x4.tex}
       \caption{QROM encoding of a $4 \times 4$ matrix $A$}
       \label{fig:qrom_4x4}
   \end{figure}
@@ -171,18 +156,18 @@ def find_row_mismatch(A, y, z):
 %   \end{itemize}
 %   \begin{figure}
 %     \centering
-%     \input{assets/inner_product.tex}
+%     \input{../results/figures/inner_product.tex}
 %     \caption{Inner product circuit for $2$-D vectors}
 %     \label{fig:inner_product}
 %   \end{figure}
 % \end{frame}
 
 
-\begin{frame}{QVMP oracle}
+\begin{frame}{QVMP circuit}
   \begin{figure}
     \centering
-    \scalebox{0.7}{\input{assets/qvmp_oracle.tex}}
-    \caption{QVMP oracle for a $4 \times 4$ matrix $A$ performing one iteration}
+    \scalebox{0.7}{\input{../results/figures/qvmp_oracle.tex}}
+    \caption{QVMP circuit for a $4 \times 4$ matrix $A$ performing one iteration}
     \label{fig:qvmp_oracle}
   \end{figure}
 \end{frame}
@@ -273,7 +258,7 @@ def find_row_mismatch(A, y, z):
     \begin{subfigure}{0.48\textwidth}
       \centering
       \includegraphics[width=1.1\textwidth]{
-          ../src/results/circuit_depth_v_tran_time_and_sim_time-MPS.pdf
+          ../results/figures/circuit_depth_v_tran_time_and_sim_time-MPS.pdf
       }
       \caption{MPS}
       \label{fig:circuit_depth_v_tran_time_and_sim_time-MPS}
@@ -281,7 +266,7 @@ def find_row_mismatch(A, y, z):
     \begin{subfigure}{0.48\textwidth}
       \centering
       \includegraphics[width=1.1\textwidth]{
-          ../src/results/circuit_depth_v_tran_time_and_sim_time-statevector_cpu.pdf
+          ../results/figures/circuit_depth_v_tran_time_and_sim_time-statevector_cpu.pdf
       }
       \caption{Statevector}
       \label{fig:circuit_depth_v_tran_time_and_sim_time-statevector_cpu}
@@ -312,7 +297,7 @@ def find_row_mismatch(A, y, z):
     Investigate more efficient encodings of matrices and related operations
   \end{exampleblock}
   \begin{exampleblock}{Transpilation time bottlenecks}
-    Investigate bottle-necks in transpilation
+    Investigate why circuit depth explodes for MPS
   \end{exampleblock}
 \end{frame}
 

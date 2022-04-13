@@ -1,13 +1,3 @@
-"""
-Output files:
-- mps_summary.csv : Op counts, depth, transpilation times, simulation times for matrix_product_state
-- statevector_cpu_summary.csv : Op counts, depth, transpilation times, simulation times for statvector
-- figures/
-    - Circuit depth vs transpilation time
-    - Dimension vs transpilation time and simulation time
-    - Circuit depth before/after transpilation
-"""
-
 import glob
 import json
 import pandas as pd
@@ -29,6 +19,12 @@ circuit_depth_after_transpilation_header = "Circuit depth (after transpilation)"
 BLUE_COLOR = "#636AF6"
 RED_COLOR = "#EE706B"
 
+def result_parts_of_str(s):
+        path = Path(s)
+        result_name_parts = path.parts[2].split("-")
+        dims_str, num_mismatches_str = (result_name_parts[0]).split("x"), result_name_parts[1]
+        return int(dims_str[0]), int(dims_str[1]), int(num_mismatches_str)
+
 def df_of_files(files):
     df = defaultdict(list)
 
@@ -48,6 +44,20 @@ def df_of_files(files):
             df[circuit_depth_after_transpilation_header].append(data["circuit_depth_after_transpilation"])
 
     return pd.DataFrame.from_dict(df)
+
+
+def filter_df_by_labels(df, labels):
+    def helper(*x):
+        (nrows, ncols) = x[0]
+        num_mismatches = x[1]
+        return (nrows, ncols, num_mismatches) in labels
+
+    filter = df[[
+        dimension_header,
+        num_row_mismatches_header
+    ]].apply(lambda x: helper(*x), axis=1)
+
+    return df[filter]
 
 
 def plot_circuit_depth_v_tran_time_and_sim_time(df, name, output_filename):
@@ -78,18 +88,8 @@ def plot_circuit_depth_v_tran_time_and_sim_time(df, name, output_filename):
 
 def plot_dimension_vs_transpilation_time_and_simulation_time(df, name, output_filename):
     labels = [(4,4,1), (16,4,2), (16,16,2), (32,4,3), (32,16,1), (64,32,1), (64,64,3)]
-    
-    def helper(*x):
-        (nrows, ncols) = x[0]
-        num_mismatches = x[1]
-        return (nrows, ncols, num_mismatches) in labels
 
-    filter = df[[
-        dimension_header,
-        num_row_mismatches_header
-    ]].apply(lambda x: helper(*x), axis=1)
-
-    df = df[filter]
+    df = filter_df_by_labels(df, labels)
 
     x = np.arange(len(labels))
     width = 0.35
@@ -106,20 +106,8 @@ def plot_dimension_vs_transpilation_time_and_simulation_time(df, name, output_fi
     plt.savefig(output_filename)
 
 
-def plot_circuit_depth_before_after_transpilation(df, name, output_filename):
-    labels = [(16,4,2), (16,8,2), (16,16,2)]
-    
-    def helper(*x):
-        (nrows, ncols) = x[0]
-        num_mismatches = x[1]
-        return (nrows, ncols, num_mismatches) in labels
-
-    filter = df[[
-        dimension_header,
-        num_row_mismatches_header
-    ]].apply(lambda x: helper(*x), axis=1)
-
-    df = df[filter]
+def plot_circuit_depth_before_after_transpilation(df, labels, name, output_filename):
+    df = filter_df_by_labels(df, labels)
 
     x = np.arange(len(labels))
     width = 0.35
@@ -148,6 +136,38 @@ def plot_circuit_depth_before_after_transpilation(df, name, output_filename):
     plt.savefig(output_filename)
 
 
+def plot_circuit_depth_of_mps_vs_statevector(mps_df, statevector_df, name, output_filename):
+    labels = [(16,8,2), (32,4,2), (64, 8, 3)]
+
+    mps_df = filter_df_by_labels(mps_df, labels)
+    statevector_df = filter_df_by_labels(statevector_df, labels)
+
+    x = np.arange(len(labels))
+    width = 0.35
+
+    fig, ax = plt.subplots()
+    ax.bar(
+        x - width/2,
+        mps_df[circuit_depth_after_transpilation_header],
+        width,
+        label="MPS",
+        color=BLUE_COLOR
+    )
+    ax.bar(
+        x + width/2,
+        statevector_df[circuit_depth_after_transpilation_header],
+        width,
+        label="Statevector",
+        color=RED_COLOR
+    )
+
+    ax.set_ylabel("Depth")
+    ax.set_xlabel("(#rows, #cols, #row mismatches)")
+    ax.set_xticks(x, labels)
+    ax.legend()
+
+    plt.savefig(output_filename)
+
 def gate_counts_df_of_files(files, gates):
     df = defaultdict(list)
 
@@ -171,17 +191,17 @@ def gate_counts_df_of_files(files, gates):
 
 
 if __name__ == "__main__":
-    def result_parts_of_str(s):
-        path = Path(s)
-        result_name_parts = path.parts[1].split("-")
-        dims_str, num_mismatches_str = (result_name_parts[0]).split("x"), result_name_parts[1]
-        return int(dims_str[0]), int(dims_str[1]), int(num_mismatches_str)
+    results_dir = Path("../results")
+    figures_dir = results_dir / "figures"
 
     def sort_helper(path_str):
         return result_parts_of_str(path_str)
 
-    mps_files = sorted(glob.glob("results/**/matrix_product_state-CPU.json"), key=sort_helper)
-    statevector_cpu_files = sorted(glob.glob("results/**/statevector-CPU.json"), key=sort_helper)
+    mps_files = sorted(glob.glob(f"{results_dir}/**/matrix_product_state-CPU.json"), key=sort_helper)
+    statevector_cpu_files = sorted(glob.glob(f"{results_dir}/**/statevector-CPU.json"), key=sort_helper)
+
+    
+    exit(0)
 
     # Generate summaries
     summary_workload = [(mps_files, "mps"), (statevector_cpu_files, "statevector_cpu")]
@@ -196,8 +216,8 @@ if __name__ == "__main__":
         circuit_metrics_df[qubit_count_header] = overall_df[qubit_count_header]
         circuit_metrics_df["Total Gate count"] = circuit_metrics_df[gates].sum(axis=1)
 
-        overall_df.to_csv(f"results/{name}_summary.csv")
-        circuit_metrics_df.to_csv(f"results/{name}_circuit_metrics_summary.csv")
+        overall_df.to_csv(results_dir / f"{name}_summary.csv")
+        circuit_metrics_df.to_csv(results_dir / f"{name}_circuit_metrics_summary.csv")
 
         overall_dfs[name] = overall_df
 
@@ -205,15 +225,28 @@ if __name__ == "__main__":
     plot_circuit_depth_v_tran_time_and_sim_time(
         overall_dfs["mps"],
         "Circuit depth vs Transpilation/Simulation time for the MPS simulation method",
-        "results/circuit_depth_v_tran_time_and_sim_time-MPS.pdf"
+        figures_dir / "circuit_depth_v_tran_time_and_sim_time-MPS.pdf"
     )
     plot_circuit_depth_v_tran_time_and_sim_time(
         overall_dfs["statevector_cpu"],
         "Circuit depth vs Transpilation/Simulation time for the Statevector simulation method",
-        "results/circuit_depth_v_tran_time_and_sim_time-statevector_cpu.pdf"
+        figures_dir / "circuit_depth_v_tran_time_and_sim_time-statevector_cpu.pdf"
     )
     plot_circuit_depth_before_after_transpilation(
         overall_dfs["mps"],
-        "Circuit depth before/after transpilation of matrices with 16 rows",
-        "results/circuit_depth_before_after_transpilation.pdf"
+        [(16,4,2), (16,4,3), (16,8,2), (16,8,3)],
+        "Circuit depth before/after transpilation of matrices with 16 rows (MPS)",
+        figures_dir / "circuit_depth_before_after_transpilation-MPS.pdf"
+    )
+    plot_circuit_depth_before_after_transpilation(
+        overall_dfs["statevector_cpu"],
+        [(16,4,2), (16,4,3), (16,8,2), (16,8,3)],
+        "Circuit depth before/after transpilation of matrices with 16 rows (Statevector)",
+        figures_dir / "circuit_depth_before_after_transpilation-statevector_cpu.pdf"
+    )
+    plot_circuit_depth_of_mps_vs_statevector(
+        overall_dfs["mps"],
+        overall_dfs["statevector_cpu"],
+        "Comparison of circuit depth after transpilation between the MPS and statevector simulation methods",
+        figures_dir / "circuit_depth_of_mps_vs_statevector_cpu.pdf"
     )

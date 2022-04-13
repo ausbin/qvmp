@@ -1,9 +1,9 @@
 % preamble
-\documentclass[10pt]{proc}
+\documentclass[11pt]{article}
 
 % metadata
 \title{
-  Implementation of Quantum Verification of Matrix Products
+  An Implementation of the Quantum Verification of Matrix Products Algorithm
 }
 \author{Elton Pinto}
 \date{}
@@ -14,7 +14,7 @@
 \usepackage{amssymb}
 \usepackage{braket}
 \usepackage[utf8]{inputenc}
-\usepackage[margin=0.5in]{geometry}
+\usepackage[margin=1in]{geometry}
 \usepackage{parskip}
 \usepackage{graphicx}
 \usepackage{hyperref}
@@ -23,9 +23,17 @@
 \usepackage{algpseudocode}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage{cleveref}
 \usetikzlibrary{quantikz}
-\usepackage[backend=biber, style=ieee]{biblatex}
+\usepackage[
+  backend=biber, 
+  style=ieee,
+  url=false,
+  doi=false
+]{biblatex}
 \addbibresource{citations.bib}
+
+\crefname{section}{§}{§§}
 
 % environments
 \theoremstyle{definition}
@@ -44,6 +52,25 @@
 % config
 \setlength{\parskip}{1em}
 
+% Changes
+%
+% - Re-read the introduction and background sections
+%   - Update/remove any irrelevant portions
+% - Update thesis statement (end of introduction and background)
+% - Update Materials and Methods
+%   - Update experimentatl setup
+%   - Add proof of Grover oracle implementation
+%   - Add QROM section
+% - Update results section
+%   - Tables
+%     - Swap with newer results (comparison between MPS and statevector)
+%   - Figures
+%     - Get rid of all figures, replace with newer ones
+%   - Analysis
+%     - Re-write this section
+% - Conclusion
+%   - Re-write this section
+
 % document
 \begin{document}
 
@@ -54,127 +81,113 @@
 Quantum computing has experienced a recent surge in popularity given the
 advancements in NISQ machines. Quantum algorithms are known to solve problems
 like factoring numbers and simulating natural systems more efficiently than a
-classical computer.  Companies such as IBM, Google, and Rigetti have recently
+classical computer. Companies such as IBM, Google, and Rigetti have recently
 built quantum computers that allow researchers to run quantum algorithms on
-physical hardware. As a result, researchers have started to apply quantum
-algorithms to solve real-world problems such as computational genomics, machine
-learning, and molecule simulation. Given these developments, it has become
-important to quantify the \textbf{limits of today’s quantum computers}, and
-\textbf{to evaluate the frameworks and languages} used to program them.
+physical hardware. Given these developments, it has become important to survey
+the feasibility of using quantum computing to solve large-scale problems.
 
 Several studies have experimentally evaluated quantum algorithms on quantum
 hardware. Mandviwalla et al. evaluated a 4-qubit implementation of Grover
 search on the IBM-Q quantum processor \cite{mandviwalla_implementing_2018}.
 Similarly, Acasiete et al. evaluated quantum random walks on graphs with 8 to
 16 vertices \cite{acasiete_implementation_2020}. However, these studies do not
-quantify the largest possible input size and they do not investigate a
-heterogenous classical-quantum approach.
+highlight the challenges involved when scaling to larger-sized circuits.
 
 Similarly, extensive work has been carried out on developing quantum
 programming frameworks. IBM has created Qiskit, a Python framework that
 supports prototyping and executing quantum algorithms on simulators and quantum
 hardware. ORNL is currently developing QCOR, a heterogenous classical-quantum
 framework that aims to use quantum computers as accelerators akin to GPUs
-\cite{mintz_qcor_2020}. However, no substantial work has been done to evaluate
-the efficacy of these programming frameworks in developing quantum-based
-systems.
+\cite{mintz_qcor_2020}. However, little work has been done to evaluate the
+efficacy of using these frameworks to develop quantum systems.
 
-Our study aims to fill these gaps in the literature by \textbf{implementing the
-Quantum Verification of Matrix Products (VMP)}
-\cite{buhrman_quantum_2005}\cite{ambainis_quantum_2002}. We selected this
-algorithm because it uses a combination of the Grover search
-\cite{nielsen_quantum_2000}, quantum random walk \cite{ambainis_quantum_2007},
-and amplitude amplification \cite{lomonaco_quantum_2002} algorithms to solve
-the larger problem of VMP. Further, parts of the algorithm that can be executed
-efficiently on a classical computer, which will allow us to evaluate the
-heterogeneous classical-quantum model. Finally, this algorithm claims to
-improve upon the best known classical algorithm. Evaluating it will allow us to
-experimentally verify this claim.
-
-This study implements the quantum verification of matrix products using the
-Qiskit framework. We evaluate this implementation using gate count, qubit
-count, circuit depth, and transpilation time metrics. Through this study, we
-hope to expand the existing suite of experimental quantum hardware evaluation,
-provide feedback to quantum framework authors, and suggest improvements to
-existing hardware. 
+Our study aims to fill in these gaps by documenting the process of developing an
+oracle for the Quantum Verification of Matrix Products (QVMP)
+\cite{buhrman_quantum_2005}\cite{ambainis_quantum_2002} algorithm. This can be
+tricky to do given the non-deterministic nature of quantum programs and the
+shortage of formal verification tooling in this space. We implement this
+algorithm in Qiskit and demonstrate its functionality by running it on the Aer
+simulator. We report a proof of oracle correctness, circuit metrics (gate count,
+qubit count, circuit depth), transpilation times, and simulation times.
 
 \section{Literature Review}
 
 
-Quantum computing places an emphasis on thinking how computation is performed
-physically, and achieves speedup over classical algorithms by using physical
-phenomenon like entanglement to perform computation. The main promise of the
-field is that it can offer a non-trivial speedup over classical computing. The
-two algorithms that are often brought up are Shor’s algorithm and Grover
-search. Shor’s algorithm provides an exponential speedup over classical
-algorithms for factoring numbers and is capable of cracking current RSA
+Quantum computing places an emphasis on thinking about how computation is
+performed physically. It achieves speedup over classical algorithms by
+exploiting physical phenomenon like entanglement to encode and perform
+computation. The main promise of the field is that it can offer a non-trivial
+speedup over classical computing. The algorithm that is frequently brought
+up to demonstrate this promise is Shor’s algorithm. Shor’s
+algorithm provides an exponential speedup over classical algorithms for
+factoring numbers and is capable of cracking a subset of the widely-used RSA
 encryption. It achieves this by using the Quantum Fourier Transform (QFT), the
 quantum analogue of a Fourier transform, to perform phase estimation and
-order-finding \cite{nielsen_quantum_2000}.  Grover search provides a
-$O(\sqrt{N})$ time-complexity for searching over unstructured data, compared to
-the classical complexity of $O(N)$, where $N$ is the size of the search space.
-This is carried out by performng multiple Grover iteration steps on the quantum
-state which constructively amplify states that correspond to search results
-\cite{nielsen_quantum_2000}. 
+order-finding \cite{nielsen_quantum_2000}.
 
-There exist many more algorithms like superdense coding, quantum key
+There are other algorithms like superdense coding, quantum key
 distribution, and quantum simulation that have potential applications in
-scientific simulation, machine learning, and cryptography. However, most of
-these algorithms require a very large number of qubits to be of practical use.
+scientific simulation, machine learning, and cryptography. However, these
+algorithms tend to require a very large number of qubits to be of practical use.
 One of the major challenges in developing large-scale multi-qubit systems is
 error-correction and noise. Before we reach the holy grail of  fault-tolerant
 quantum systems, the field is currently attempting to make use of Noisy
 Intermediate Quantum Computers (NISQ) to solve problems of important practical
-use. However, existing literature on quantum algorithms do not treat their
-physical implementations and do not offer resource estimates required to obtain
-reasonable results. Our study explores this domain by attempting to
-implement the quantum matrix product verification, measure resource estimates
-and how they scale on varying input sizes, and examine the limits of current
-quantum hardware and simulators.
+use.
 
-There are two popular algorithms for quantum matrix product verification. The
-first algorithm, proposed by Ambainis, Buhrman, Høyer, Karpinski, and Kurur,
-uses amplitude amplification along with Grover search to look for a sub-matrix
-that doesn’t satisfy the product \cite{ambainis_quantum_2002}. This algorithm
-runs in $O(n^{\frac{7}{3}})$ time and improves upon the optimal classical bound provided by
-Freivalds \cite{freivalds_fast_1979}. The speedup is obtained because the
-algorithm makes use of interference to arrive at a result in a smaller number
-of iterations. However, metrics do not exist for the number of qubits required
-to implement the oracles for the quantum search algorithms used, and the
-resources required to carry out operations like multiplying sub-matrices.
-Further, little research has been done on evaluating the algorithm in a
-heterogenous classical-quantum setup where quantum computers are used to
-accelerate certain parts of the algorithm. There exists a 4-qubit physical
-implementation of Grover search on IBM’s quantum processor
-\cite{mandviwalla_implementing_2018}. This implementation tests IBM quantum
-computers on Grover’s algorithm to investigate the impacts of different circuit
-and device attributes, and to highlight the current capabilities of the system.
-This study reports that current quantum computers are able to solve the search
-problem on very small data sets. This is similar to what our study intends to
-do, however, it does not investigate the practicality of running algorithms
-that use Grover search and does not comment on the composability of circuits
-and how it affects performance and results. 
+Grover's algorithm is a quantum search algorithm that provides an $O(\sqrt{N})$
+algorithm for searching through unstructured data, which is a quadratic speed-up
+over its classical counterpart. It does this by performing multiple Grover
+iteration steps which constructively amplify states that correspond to search
+results \cite{nielsen_quantum_2000}. A Grover iteration requires a user-defined
+oracle to function correctly. The job of the oracle is to report back whether an
+input (encoded as a quantum state) satisfies the search criteria. The core of
+Grover search is farily straightforward to implement. The main challenge
+here is efficiently encoding the oracle (which is typically described as
+a classical decision function) as a quantum circuit. In this study, we try to
+better understand this challenge by implementing QVMP which uses Grover search
+(and therefore an oracle) as a sub-routine.
 
-The second algorithm, proposed by Buhrman and Spalek, uses quantum random walks
-to speed up the verification process and runs in $O(n^\frac{5}{3})$ time
-\cite{buhrman_quantum_2005}. Quantum random walks are analogous to classical
-walks, and have a number of applications in quantum programming tasks. For
-example, they are used in solving the element distinctness problem, in which
-the goal is to find if there exists a set of M non-distinct elements in a
-domain of N elements \cite{ambainis_quantum_2007}.  However, the papers
-describing these applications do not talk about implementations on quantum
-hardware, and restrict the analysis to theoretical concerns like correctness
-and time complexity. There have been attempts to run quantum random walks on
-quantum hardware. Balu et al. implemented an efficient physical realization of
-a quantum random walk using $log_2(N$ )qubits to represent an $N$-point lattice
-\cite{balu_physical_2018}. Experimental evaluation was carried out on the IBM-Q
-five-qubit processor. To overcome resource requirements, they used a continuous
-time-limit quantum random walk implementation. Acasiete et al. have implemented
-discrete-time quantum random walks on IBM-Q, and were able to run quantum
-search based algorithms on graphs with 8 and 16 vertices
-\cite{acasiete_implementation_2020}. They were able to obtain results with a
-50\% fidelity, and claim that the results are more efficient than equivalent
-classical algorithms.
+There are two popular algorithms for QVMP. The first algorithm, proposed by
+Ambainis, Buhrman, Høyer, Karpinski, and Kurur, uses amplitude amplification
+along with Grover search to look for a sub-matrix that doesn’t satisfy the
+product \cite{ambainis_quantum_2002}. This algorithm runs in
+$O(n^{\frac{7}{3}})$ time and improves upon the optimal classical bound provided
+by Freivalds \cite{freivalds_fast_1979}. The speedup is obtained because the
+algorithm makes use of interference to arrive at a result in a smaller number of
+iterations. However, metrics do not exist for the number of qubits required to
+implement the oracles for the quantum search algorithms used, and the resources
+required to carry out operations like multiplying sub-matrices.  Further, little
+research has been done on evaluating the algorithm in a heterogenous
+classical-quantum setup where quantum computers are used to accelerate certain
+parts of the algorithm. There exists a 4-qubit physical implementation of Grover
+search on IBM’s quantum processor \cite{mandviwalla_implementing_2018}. This
+implementation tests IBM quantum computers on Grover’s algorithm to investigate
+the impacts of different circuit and device attributes, and to highlight the
+current capabilities of the system.  This study reports that current quantum
+computers are able to solve the search problem on very small data sets. This is
+similar to what our study intends to do, however, it does not investigate the
+practicality of running algorithms that use Grover search and does not comment
+on the composability of circuits and how it affects performance and results. The
+second algorithm, proposed by Buhrman and Spalek, uses quantum random walks to
+speed up the verification process and runs in $O(n^\frac{5}{3})$ time
+\cite{buhrman_quantum_2005}.
+
+Quantum random walks are analogous to classical walks, and have a number of
+applications in quantum programming tasks. For example, they are used in solving
+the element distinctness problem, in which the goal is to find if there exists a
+set of M non-distinct elements in a domain of N elements
+\cite{ambainis_quantum_2007}. There have been attempts to run quantum random
+walks on quantum hardware. Balu et al.  implemented an efficient physical
+realization of a quantum random walk using $log_2(N$ )qubits to represent an
+$N$-point lattice \cite{balu_physical_2018}.  Experimental evaluation was
+carried out on the IBM-Q five-qubit processor. To overcome resource
+requirements, they used a continuous time-limit quantum random walk
+implementation. Acasiete et al. have implemented discrete-time quantum random
+walks on IBM-Q, and were able to run quantum search based algorithms on graphs
+with 8 and 16 vertices \cite{acasiete_implementation_2020}. They were able to
+obtain results with 50\% fidelity, and claim that the results are more efficient
+than equivalent classical algorithms.
 
 There exists research on resource estimate quantification and benchmarking for
 some quantum algorithms. Jaques et al. implemented Grover oracles for key
@@ -185,20 +198,7 @@ number of Clifford, T, and CNOT gates required for running circuits that can
 crack AES-128, AES-192, and AES-256. The project uses Q\#, a quantum
 programming language developed by Microsoft. The project reduces the circuit
 depth of the Grover oracle by using internal parallelization, in which the
-Grover search instance is run on disjoint subsets of the input domain. However,
-the project does not address the largest size input that could be run on
-real-world quantum hardware, and they restrict their analysis to using the Q\#
-simulator instead.
-
-Borujeni et al. have evaluated the quantum Bayesian networks on the IBM-Q
-processor \cite{borujeni_experimental_2020}. They set up a 4-node Bayesian
-network for stock prediction and run the circuit on IBM’s nine quantum
-computers. As part of their study, they evaluate the performance of the
-circuits and the efficiency of the quantum gate transpilation process that maps
-a circuit graph to a quantum device. This study is in-line with what we aim to
-do with our research. However, we would also like to report on the maximum
-sized input we can run before we are constrained by hardware or we start
-getting results below a threshold. 
+Grover search instance is run on disjoint subsets of the input domain.
 
 A number of open-source frameworks exist for conducting quantum computing
 research. IBM provides the Qiskit framework which lets researchers quickly
@@ -232,38 +232,14 @@ concrete implementation of an algorithm can process. We can use such evaluation
 reports to gauge the current state of quantum computing and suggest areas which
 need more improvement. Further, we can provide valuable feedback to library
 authors about features that need to be added to facilitate productive quantum
-algorithm research. Our study contributes to the domain of experimental
-evaluation of quantum algorithms by attempting to implement the verification of
-matrix products algorithm in Qiskit. We gather resource estimates like
-the number of qubits, number of gates, and circuit depth. 
+algorithm research.
 
 \section{Materials and Methods}
 
-\begin{figure*}[!ht]
-  \centering
-  \begin{quantikz}
-    \lstick[wires=5]{$n$ qubits} 
-      & \qw 
-      & \gate[wires=5][2cm]{U_f} 
-      & \qw
-      & \gate[wires=5]{H^{\otimes n}}
-      & \gate[wires=5]{2\ket{0}\bra{0} - I}
-      & \gate[wires=5]{H^{\otimes n}}
-      & \qw \\
-    & \qw & \qw & \qw & \qw & \qw & \qw & \qw \\
-    & \qw & \qw & \qw & \qw & \qw & \qw & \qw \\
-    & \qw & \qw & \qw & \qw & \qw & \qw & \qw \\
-    & \qw & \qw & \qw & \qw & \qw & \qw & \qw \\
-  \end{quantikz}
-  \caption{Grover operator circuit}
-  \label{fig:grover_operator_circuit}
-\end{figure*}
+This section covers the major components of QVMP, the algorithm itself,
+implementation details, and experimental setup.
 
-This section will cover the main algorithms used in quantum VMP, implementation
-details, and experimental setup. This will help in understanding our design
-decisions and our analysis of it in \ref{sec:analysis}.
-
-\subsection{Grover's algorithm}
+\subsection{Grover's Algorithm}
 
 Grover’s algorithm is a popular quantum search algorithm. Given an input space
 of $N$ elements and an oracle $U_f$, Grover search can find $M$ solution
@@ -293,6 +269,26 @@ be  $O(\sqrt{\frac{N}{M}})$. Therefore, in order to use Grover’s algorithm, on
 needs to know the exact number of solutions $M$ in the search space.
 
 The Grover operator circuit is summarized in Fig \ref{fig:grover_operator_circuit}.
+
+\begin{figure*}[!ht]
+  \centering
+  \begin{quantikz}
+    \lstick[wires=5]{$n$ qubits} 
+      & \qw 
+      & \gate[wires=5][2cm]{U_f} 
+      & \qw
+      & \gate[wires=5]{H^{\otimes n}}
+      & \gate[wires=5]{2\ket{0}\bra{0} - I}
+      & \gate[wires=5]{H^{\otimes n}}
+      & \qw \\
+    & \qw & \qw & \qw & \qw & \qw & \qw & \qw \\
+    & \qw & \qw & \qw & \qw & \qw & \qw & \qw \\
+    & \qw & \qw & \qw & \qw & \qw & \qw & \qw \\
+    & \qw & \qw & \qw & \qw & \qw & \qw & \qw \\
+  \end{quantikz}
+  \caption{Grover operator circuit}
+  \label{fig:grover_operator_circuit}
+\end{figure*}
 
 
 \subsubsection{Grover Oracles} \label{sec:grover_oracles}
@@ -346,7 +342,7 @@ runs in $O(n^{\frac{3}{2}})$ time. We need to run $\sqrt{\frac{n}{\sqrt{n}}} =
 n^{\frac{1}{4}}$ iterations of amplitude amplification. Therefore, the overall
 running time of the algorithm is $O(n^{\frac{7}{4}})$.
 
-The algorithm is summarized in Algorithm \ref{alg:qvmp_grover}.
+The algorithm is summarized in \cref{alg:qvmp_grover}.
 
 \begin{algorithm}
   \caption{Quantum VMP using Grover Search \cite{j_quantum_2020}}
@@ -363,86 +359,59 @@ The algorithm is summarized in Algorithm \ref{alg:qvmp_grover}.
           \item Pick a random vector $x$ of size $\sqrt{n}$
           \item Classically compute $y = B_ix$ and $z = C_ix$
           \item Using Grover search with $\sqrt{n}$ iterations, find a row of
-            index $j$ such that $(Ay != z)_j$
+            index $j$ such that $(Ay \neq z)_j$
         \end{enumerate}
       }
+    \item XOR the sub-results
   \end{enumerate}
 \end{algorithm}
 
 
 \subsection{Implementation}
 
-We implement QVMP in the Qiskit programming framework.
+We implement QVMP in Qiskit, a popular open-source quantum computing platform developed by IBM.
+Qiskit uses Python as the host language and has a large libary of utilities that allow
+developers to compose non-trivial circuits. It ships with a transpiler and
+several backends capable of running circuits on simulators and quantum hardware.
 
-Qiskit is a popular open-source quantum computing platform developed by IBM.
-Qiskit uses Python as the host language and does not restrict developers from
-using the various abstractions and constructs that Python provides. It lives as
-a DSL within Python. Qiskit has a large libary of quantum circuits and allows
-developers to compose different circuits together. Further, it provides a
-transpiler which can compile a quantum circuit into both simulator and
-real-device backends. Qiskit makes it easy to summarize circuit details like
-gate count, qubit count, and circuit depth.
-
-We restrict our implementation to using binary matrices. The implementation,
-however, can be extended to support other number encodings. The difference lies
-in the number of qubits used.
-
+We restrict our implementation to only support binary matrices. Remaining
+details can be found in \cref{sec:analysis}.
 
 \subsection{Experimental Setup}
 
-We evaluate our implementation on a 13' MacBook Pro 2017 with 16GB RAM and a 2.5 GHz Dual-Core Intel COre i7 processor.
-
-We focus on the following metrics for our implementation: 
-\begin{itemize}
-  \item Gate count
-  \item Qubit count
-  \item Circuit depth
-  \item Average transpilation time
-\end{itemize}
-
-Using these metrics we will determine the practicality of using QVMP to
-solve real-world problems and some of the challenges associated with
-implementing Grover oracles.
+The experiments were run on an AMD EPYC 7502 32-Core Processor, 2.5 GHz, 128
+CPUs. The source code is available at \url{https://github.com/1ntEgr8/qvmp}.
 
 \section{Results}
 
-% Indexer
-\begin{figure*}
-  \centering
-  \includegraphics[scale=0.3]{results/indexer_3x3.png} 
-  \caption{Indexer Circuit for a $3 \times 3$ matrix}
-  \label{fig:indexer_circuit_3x3}
-\end{figure*}
+% TODO insert results
+% [ ] table - Circuit metrics (using MPS simulator)
+  % TODO need more row entries
+% [ ] table - Circuit metrics (using Statevector simulator)
+  % TODO need more row entries
+% [x] fig - Circuit depth before/after transpilation (using MPS simulator)
+% ../results/figures/circuit_depth_before_after_transpilation-MPS.pdf
+% [x] fig - Circuit depth before/after transpilation (using Statevector)
+% ../results/figures/circuit_depth_before_after_transpilation-statevector_cpu.pdf
+% [x] fig - Circuit depth vs Transpilation/Simulation time (MPS)
+% ../results/figures/circuit_depth_v_tran_time_and_sim_time-MPS.pdf
+% [x] fig - Circuit depth vs Transpilation/Simulation time (Statevector)
+% ../results/figures/circuit_depth_v_tran_time_and_sim_time-statevector_cpu.pdf
+% [x] fig - Circuit depth of MPS vs Statevector after transpilation
+% ../results/figures/circuit_depth_of_mps_vs_statevector_cpu.pdf
+% [ ] fig - Functionality of QVMP circuit
+% [ ]   (a) When there are solutions
+% [ ]   (b) When there are no solutions
+% [x] fig - QROM example
+% ../results/figures/qrom_4x4.tex
+% TODO check if QROM matrix is correct
+% [x] fig - Inner product example
+% ../results/figures/inner_product.tex
+% [x] fig - QVMP oracle example
+% ../results/figures/qvmp_oracle.tex
 
-\begin{figure*}[!ht]
-  \centering
-  \begin{minipage}[b]{0.45\textwidth}
-    \begin{equation*}
-      A = \begin{bmatrix}%
-        0 & 1 & 0 & 1 \\
-        1 & 1 & 1 & 0 \\
-        1 & 0 & 0 & 1 \\
-        1 & 0 & 1 & 0 \\
-      \end{bmatrix}
-    \end{equation*}
-  \end{minipage}
-
-  \begin{subfigure}[b]{0.3\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{results/indexer_third_row.png} 
-    \caption{Indexing the third row of $A$}
-  \end{subfigure}
-  %
-  \begin{subfigure}[b]{0.3\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{results/indexer_superposition.png} 
-    \caption{Indexing $A$ using a superposition of the index}
-  \end{subfigure}
-
-  \caption{Indexer circuit functionality}
-  \label{fig:indexer_func}
-\end{figure*}
-
+% TODO note about MPS vs Statevector
+% TODO note about what you benchmarked (just the Grover portion, ideal circuit)
 We report the gate counts, circuit depth, and number of qubits used when
 targeting Aer simulator in Tables \ref{table:marking_oracle_stats} and
 \ref{table:circuit_stats}. Further, we report transpilation times in Table
@@ -456,15 +425,18 @@ marking oracle circuit for a 4x4 matrix in Fig
 
 \section{Analysis} \label{sec:analysis}
 
+This section describes and analyzes our implementation.
+
+% TODO Note about classical function, segway into QROM and Inner Product
 The QVMP oracle is a blackbox that checks if $(Ay - z)_i \neq 0$, where $A$,
 $y$, $z$, and $i$ are as defined in the Alg \ref{alg:qvmp_grover}. Qiskit does
-not offer automatic compilation of programming constructs like classical arrays to a
-quantum circuit. The programmer has to define these operations on a per-problem
-specific basis. The QVMP oracle is composed of the following two sub-circuits:
-the indexer circuit and the inner product circuit.
+not offer tools synthesize oracles using of programming constructs like classical arrays
+to a quantum circuit. The programmer has to define these operations on a
+per-application basis. The QVMP oracle is composed of the following two
+sub-circuits: the indexer circuit and the inner product circuit.
 
-\subsection{Indexer Circuit}
-
+% TODO Explain why QROM is needed, what happens if you use an naive approach
+\subsection{QROM}
 
 The role of the indexer is to output $A[i]$, where $A$ is an $m \times n$
 matrix and $i$ is an integer index. We encode the matrix $A$ using
@@ -494,53 +466,22 @@ every index permutation sequentially. This pattern can be seen in the way
 the $X$ gates are applied to the index qubits before applying the Tofolli
 gate.
 
+% TODO Talk about how this only works for binary matrices (i.e. in field $F_2$)
 \subsection{Inner Product Circuit}
 
 The inner product circuit \ref{fig:inner_product_circuit_3x1}, as the name
 suggests, computes the inner product between two vectors encoded as qubits. Our
 specific implementation only handles binary numbers (where multiplication is
-defined as logical $AND$ and addition as logical $OR$), but can be easily
+defined as logical AND and addition as logical OR), but can be easily
 extended to support other data types.
 
-% Inner Product
-\begin{figure*}[!ht]
-  \centering
-  \includegraphics[scale=0.4]{results/inner_product_3x1.png} 
-  \caption{Inner Product Circuit for $3 \times 1$ vectors}
-  \label{fig:inner_product_circuit_3x1}
-\end{figure*}
-\begin{figure*}[!ht]
-  \centering
-  \begin{minipage}[b]{0.45\textwidth}
-    \begin{align*}
-      x = \begin{pmatrix}1\\1\\1\\1\end{pmatrix} \text{, } y = \begin{pmatrix}1\\0\\1\\0\end{pmatrix} \\
-    \end{align*}
-  \end{minipage}
-  \begin{subfigure}[b]{0.3\textwidth}
-    \includegraphics[width=\textwidth]{results/inner_product_true.png} 
-    \caption{Inner product circuit outputting $1$}
-    \label{fig:inner_product_example_true}
-  \end{subfigure}
-
-  \begin{minipage}[b]{0.45\textwidth}
-    \begin{align*}
-      x = \begin{pmatrix}0\\1\\0\\1\end{pmatrix} \text{, } y = \begin{pmatrix}1\\0\\1\\0\end{pmatrix} \\
-    \end{align*}
-  \end{minipage}
-  \begin{subfigure}[b]{0.3\textwidth}
-    \includegraphics[width=\textwidth]{results/inner_product_false.png} 
-    \caption{Inner product circuit outputting $0$}
-    \label{fig:inner_product_example_false}
-  \end{subfigure}
-
-\caption{Inner product circuit functionality}
-\label{fig:inner_product_func}
-\end{figure*}
-
-The $AND$ operation is done using a Toffoli gate.  The $OR$ gate is then
+The AND operation is done using a Toffoli gate.  The OR gate is then
 trivially implemented using De-Morgan's law. Both of these operations are
 out-of-place.
 
+% TODO encoding of $A$, $y$, $z$
+% TODO uncomputation and why it is required
+% TODO Proof of oracle correctness
 \subsection{QVMP Oracle}
 \begin{figure*}
   \centering
@@ -552,7 +493,7 @@ The marking oracle (Fig \ref{fig:marking_oracle_4x4}) is composed of both the
 indexer and the inner product circuits. We first index into $A$ and $z$
 outputting their results into ancilla qubits. Then we compute the inner product
 $A_iy$. Finally, we compare the inner product with $z_i$. The comparator
-circuit is a $CNOT$ with an additional $X$ gate applied to the target qubit.
+circuit is a CNOT with an additional $X$ gate applied to the target qubit.
 
 As mentioned in Section \ref{sec:grover_oracles}, Grover's algorithm needs an
 oracle which performs a phase-flip on correct solutions. We can easily convert
@@ -563,99 +504,48 @@ qubit in the $\ket{-}$ state.
 Another important point to note is that the oracle undoes the operations it
 carries out in the workspace qubits. This is required so that the next
 iteration of Grover can start with a clean workspace. Qiskit simplifies the
-process of obtaining the inverse circuits. Every \verb|QuantumCircuit| object has
+process of obtaining the inverse circuits. Every \emph{QuantumCircuit} object has
 an inverse method which yields the corresponding circuit.
-
-\vfill
 
 \subsection{Overall Circuit}
 
-
-\begin{table*}[t]
-  \centering
-  \begin{tabular}{|c||c|c|c|c|c||c|c|c|c|} 
-   \hline
-   Order & ccx & cx & mcx & mcxgray & x & Total Gates & Circuit Depth & Qubit Count \\
-   \hline
-   2 & 18 & 1 & 0 & 0 & 13 & 32 & 21 & 15 \\
-    4 & 8 & 1 & 42 &  & 33 & 84 & 57 & 36 \\
-    8 & 16 & 1 & 144 & 2 & 73 & 236 & 177 & 101 \\
-    16 & 32 & 1 & 0 & 546 & 153 & 732 & 609 & 326 \\
-    24 & 48 & 1 & 0 & 1202 & 235 & 1486 & 1297 & 679 \\
-    32 & 64 & 1 & 0 & 2114 & 313 & 2492 & 2241 & 1159 \\
-    64 & 128 & 1 & 0 & 8322 & 633 & 9084 & 8577 & 4360 \\
-  \hline
-  \end{tabular}
-  \caption{VMP Marking Oracle Stats}
-  \label{table:marking_oracle_stats}
-\end{table*}
-
-\begin{table*}[t]
-  \centering
-  \begin{tabular}{|c||c|c|c|c|c|c|c|c|c||c|c|c|} 
-   \hline
-   Order & ccx & cx & h & mcx & mcxgray & u1 & u2 & u3 & x & Total Gates & Circuit Depth & Qubit Count \\
-   \hline
-   2 &  72 & 4 & 13 &  & 4 & 9 & 116 & 2 & 49 & 269 & 94 & 15 \\
-  4 &  56 & 7 & 33 & 294 & 7 & 15 & 495 & 5 & 219 & 1131 & 415 & 36 \\
-  8 &  112 & 7 & 97 & 1008 & 21 & 15 & 1406 & 5 & 493 & 3164 & 1255 & 101 \\
-  16 &  704 & 22 & 321 &  & 12034 & 45 & 14309 & 19 & 3286 & 30740 & 13445 & 326 \\
-  24 &  1056 & 22 & 673 &  & 26466 & 45 & 29842 & 19 & 5070 & 63193 & 28581 & 679 \\
-32 & 1728 & 27 & 1153 &  & 57105 & 55 & 62542 & 24 & 8326 & 130960 & 60564 & 1159 \\
-      \hline
-  \end{tabular}
-  \caption{VMP Circuit Stats}
-  \label{table:circuit_stats}
-\end{table*}
-
-\begin{table*}[!ht]
-  \centering
-  \begin{tabular}{|c|c|}
-   \hline
-    Order & Time (in seconds) \\
-   \hline
-    2 & 0.24860209489997942s \\
-    4 & 0.8189974269000686s \\
-    8 & 2.3804883372999486s \\ 
-    16 & 27.484900246300004s \\
-    24 & 66.20581728570009s \\
-    \hline
-  \end{tabular}
-  \caption{VMP Circuit Transpilation Stats}
-  \label{table:transpilation_stats}
-
-\end{table*}
-
 To complete the circuit, we need to apply Grover's search followed by amplitude
-amplification. Qiskit provides the \verb|AmplificationProblem| routine which lets
+amplification. Qiskit provides the \emph{AmplificationProblem} routine which lets
 you describe a search problem in the form of an oracle, initial state
 preparation, and good states. We use this routine to build the necessary
 circuits. For the Grover sub-circuit $G_i$, the state preparation is set to a
 Hadamard on the objective qubits. For amplitude amplification, we pass $G_i$ as
 the state preparation parameter.
 
+% TODO Note about number of Grover iterations
+% When number of solutions are known vs unknown (point back to Results section)
+
+% TODO discussion
+% Functionality (for both cases)
+  % Number of Grover iterations needed
+  % Tradeoff between number of solutions and number of iterations (solving the
+  % inverse problem is better)
+% Circuit metrics
+  % most popular gates, circuit depth (before, after) for MPS vs statevector
+    % statevector able to optimize away some gates
+  % Qubit count (function of number of columns and rows) (compare to naive case)
+  % Number of gates and circuit depth (function of number of grover iterations, number of rows)
+% Transpilation vs Simulation times
+  % Difference between MPS and Statevector (oppositely shaped charts)
+
+\subsection{Discussion}
+
 Figures \ref{table:marking_oracle_stats} and \ref{table:circuit_stats} show metrics
 associated with gate count, qubit count, and circuit depth for the oracle
 transpilation and overall circuit transpilation respectively. After
 transpilation, the Qiskit compiler decomposes higher-level gates to match the
 gate set supported by the backend. We see that the qubit count rises to more
-than 1000 for even small matrices of order 32. Further, transpilation onto the
+than 4000 for even small matrices of order 32. Further, transpilation onto the
 Aer backend added gates that we not part of the high-level design (like $U_2$
 and $U_3$). This results in a large increase in the number of quantum
 operations performed. The transpilation time rises exponentially with an
 increase in the order of the matrix (reaching slightly more than a minute for
 an order 24 matrix), thereby slowing the development process.
-
-\vfill
-
-\subsection{Optimization Opportunities}
-
-The implementation of the QVMP oracle can be further optimized. Note that the
-matrix $A$ is not used for the rest of the oracle after the index operation.
-This means that we can use $A$ as the oracle workspace to finish the rest of
-the operations. Since quantum gates are reversible, we will be able to get back
-$A$ by applying the reverse operations. This will reduce the number of qubits
-required at the cost of increasing circuit depth.
 
 \subsection{Challenges}
 
@@ -666,12 +556,12 @@ implement more complex oracles that have succinct classical descriptions.
 Grover oracles typically try to emulate a classical operation, and the task of
 implementing the oracle amounts to writing the equivalent quantum circuits. We
 can develop tooling that takes a classical description of a Grover oracle and
-automatically synthesize that into an quantum circuit. Qiskit offers the \verb|@classical_function|
-decorator to do this, but as mentioned above, it is only
-limited to integers. We believe that there is scope to extend the synthesis to
-higher-level data types (like arrays and structs) and operators (like
-indexing). This will boost developer productivity and make it easier to iterate
-on quantum search problems.
+automatically synthesize that into an quantum circuit. Qiskit offers the
+classical function decorator to do this, but as mentioned above, it is
+only limited to integers. We believe that there is scope to extend the
+synthesis to higher-level data types (like arrays and structs) and operators
+(like indexing). This will boost developer productivity and make it easier to
+iterate on quantum search problems.
 
 Another challenge revolves around verification of correctness. Due to the
 non-deterministic nature of quantum computing, it is more nuanced and
@@ -688,11 +578,30 @@ matrices of much larger size.  Quantum noise makes it harder to put QVMP to
 practical use. Our findings show that NISQ machines and simulators do not have
 the resources to support solving a VMP problem of sufficient size.
 
+\section{Conclusion}
+
+In our study, we implemented the quantum verification of matrix products (QVMP)
+algorithm using the Qiskit programming framework. We evaluated our
+implementation using gate count, qubit count, circuit depth, and transpilation
+time metrics. We detail the mechanics and space complexity of each component of
+the circuit and show how they compose together. 
+
+The study reveals that a QVMP circuit of amenable size cannot be run on NISQ
+machines due to the number of qubits required to encode the input matrix. It
+also highlights the challenges involved in implementing non-trivial quantum
+algorithms and how some parts of it (like the synthesis of Grover oracles) can
+be automated.
+
+Future work in this space would look to automate the transpilation of a
+restricted set of classical functions to quantum circuits using formal
+verification techniques if possible. The REVS compiler from Microsoft Research
+is a step in the right direction \cite{amy2017verified}. The encoding of
+matrices could be improved by using Quantum RAM (QRAM) as outlined in
+\cite{giovannetti2008quantum}. This can help reduce the qubit count without
+compromising circuit depth.
+
+\newpage
+
 \printbibliography[title=Bibliography]
 
 \end{document}
-
-%%% Local Variables:
-%%% mode: latex
-%%% TeX-master: t
-%%% End:

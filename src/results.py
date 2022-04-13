@@ -70,9 +70,9 @@ def get_results(dims, num_incorrect, num_solutions_are_known, output_dir, timeit
 
         print(f"dims={dims}, num_incorrect={num_incorrect}, method={method}, device={device}")
 
-    
+ 
 if __name__ == "__main__":
-    results_dir = Path("results")
+    results_dir = Path("../results")
     if not results_dir.exists():
         results_dir.mkdir()
 
