@@ -1,4 +1,4 @@
-# Experimental Evaluation of Quantum VMP
+# An Implementation of Quantum Verification of Matrix Products
 
 ## Building the paper
 
