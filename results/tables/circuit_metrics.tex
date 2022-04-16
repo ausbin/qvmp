@@ -1,0 +1,43 @@
+\begin{table}
+    \centering
+    \begin{subtable}{\textwidth}
+      \resizebox{\textwidth}{!}{%
+        \begin{tabular}{|l|c||c|c|c|c|c|c|c|c||c|c|c|c|}
+          \hline
+          Dimension & Mismatches & ccx &      cx &   x &     h & z &      u1 &    u2 & u3 & Grover iterations &   Depth & Qubits & Total gates \\
+          \hline
+           (4, 4) &          1 &  30 &       1 &  11 &     2 & 1 &       2 &     2 &  0 &                 1 &      44 &     11 &          49 \\
+          (16, 4) &          2 &  16 &    6220 &  68 &   176 & 2 &    5216 &  1564 &  3 &                 2 &   10585 &     13 &       13265 \\
+          (16, 8) &          2 &  32 &   10108 &  69 &   284 & 2 &    8460 &  2536 &  3 &                 2 &   16993 &     21 &       21494 \\
+          (32, 4) &          2 &  24 &   42060 & 204 &   461 & 3 &   42037 &   504 &  6 &                 3 &   69510 &     14 &       85299 \\
+          (32, 8) &          1 &  64 &   91408 & 272 &   997 & 4 &   91377 &  1056 &  8 &                 4 &  150375 &     22 &      185186 \\
+         (32, 32) &          3 & 128 &  185912 & 151 &  2025 & 2 &  185897 &  2052 &  4 &                 2 &  303901 &     70 &      376171 \\
+          (64, 8) &          3 &  48 &  300324 & 401 &  1602 & 3 &  300315 &  1632 &  4 &                 3 &  497172 &     23 &      604329 \\
+         (64, 16) &          2 & 128 &  786960 & 538 &  4190 & 4 &  786948 &  4232 &  5 &                 4 & 1300351 &     39 &     1583005 \\
+         (64, 64) &          3 & 384 & 2329596 & 432 & 12396 & 3 & 2329587 & 12426 &  4 &                 3 & 3843672 &    135 &     4684828 \\
+          \hline
+        \end{tabular}}
+      \caption{MPS}
+      \label{table:circuit_metrics_mps}
+    \end{subtable}
+    \begin{subtable}{\textwidth}
+      \resizebox{\textwidth}{!}{%
+        \begin{tabular}{|l|c||c|c|c|c|c|c|c|c||c|c|c|c|}
+          \hline
+          Dimension & Mismatches & ccx &      cx &   x &     h & z &      u1 &    u2 & u3 & Grover iterations &   Depth & Qubits & Total gates \\
+          \hline
+          (4, 4) &          1 &  30 &  1 &  11 & 2 & 1 &  2 &  2 &  0 &                 1 &    44 &     11 &          49 \\
+         (16, 4) &          2 &  16 &  0 &  75 & 4 & 2 &  3 & 12 &  1 &                 2 &   261 &     13 &         113 \\
+         (16, 8) &          2 &  32 &  0 &  76 & 4 & 2 &  3 & 12 &  1 &                 2 &   385 &     21 &         130 \\
+         (32, 4) &          2 &  24 &  0 & 208 & 5 & 3 &  4 & 24 &  2 &                 3 &   684 &     14 &         270 \\
+         (64, 8) &          3 &  48 &  0 & 405 & 6 & 3 &  4 & 30 &  2 &                 3 &  2040 &     23 &         498 \\
+         (64, 8) &          1 &  96 &  0 & 801 & 6 & 6 &  7 & 60 &  5 &                 6 &  4077 &     23 &         981 \\
+          \hline
+        \end{tabular}}
+      \caption{Statevector}
+      \label{table:circuit_metrics_statevector_cpu}
+    \end{subtable}
+    \caption{Circuit metrics for MPS and statevector simulation methods on
+    select dimensions. Depth and total gates were measured after transpilation.}
+    \label{table:circuit_metrics}
+  \end{table}

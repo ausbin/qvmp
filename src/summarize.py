@@ -95,12 +95,14 @@ def plot_dimension_vs_transpilation_time_and_simulation_time(df, name, output_fi
     width = 0.35
 
     fig, ax = plt.subplots()
-    ax.bar(x - width/2, df[transpilation_time_header], width, label="Transpilation time", color=BLUE_COLOR)
-    ax.bar(x + width/2, df[simulation_time_header], width, label="Simulation time", color=RED_COLOR)
+    rects1 = ax.bar(x - width/2, df[transpilation_time_header], width, label="Transpilation time", color=BLUE_COLOR)
+    rects2 = ax.bar(x + width/2, df[simulation_time_header], width, label="Simulation time", color=RED_COLOR)
 
     ax.set_ylabel("Time (s)")
     ax.set_xlabel("(#rows, #cols, #row mismatches)")
     ax.set_xticks(x, labels)
+    ax.bar_label(rects1, padding=3)
+    ax.bar_label(rects2, padding=3)
     ax.legend()
     
     plt.savefig(output_filename)
@@ -113,24 +115,26 @@ def plot_circuit_depth_before_after_transpilation(df, labels, name, output_filen
     width = 0.35
 
     fig, ax = plt.subplots()
-    ax.bar(
+    rects1 = ax.bar(
         x - width/2,
         df[circuit_depth_before_transpilation_header],
         width,
-        label=circuit_depth_before_transpilation_header,
+        label="Before transpilation",
         color=BLUE_COLOR
     )
-    ax.bar(
+    rects2 = ax.bar(
         x + width/2,
         df[circuit_depth_after_transpilation_header],
         width,
-        label=circuit_depth_after_transpilation_header,
+        label="After transpilation",
         color=RED_COLOR
     )
 
     ax.set_ylabel("Depth")
     ax.set_xlabel("(#rows, #cols, #row mismatches)")
     ax.set_xticks(x, labels)
+    ax.bar_label(rects1, padding=3)
+    ax.bar_label(rects2, padding=3)
     ax.legend()
     
     plt.savefig(output_filename)
@@ -146,14 +150,14 @@ def plot_circuit_depth_of_mps_vs_statevector(mps_df, statevector_df, name, outpu
     width = 0.35
 
     fig, ax = plt.subplots()
-    ax.bar(
+    rects1 = ax.bar(
         x - width/2,
         mps_df[circuit_depth_after_transpilation_header],
         width,
         label="MPS",
         color=BLUE_COLOR
     )
-    ax.bar(
+    rects2 = ax.bar(
         x + width/2,
         statevector_df[circuit_depth_after_transpilation_header],
         width,
@@ -162,8 +166,10 @@ def plot_circuit_depth_of_mps_vs_statevector(mps_df, statevector_df, name, outpu
     )
 
     ax.set_ylabel("Depth")
-    ax.set_xlabel("(#rows, #cols, #row mismatches)")
+    ax.set_xlabel("(#rows, #cols, #mismatches)")
     ax.set_xticks(x, labels)
+    ax.bar_label(rects1, padding=3)
+    ax.bar_label(rects2, padding=3)
     ax.legend()
 
     plt.savefig(output_filename)
@@ -200,11 +206,11 @@ if __name__ == "__main__":
     mps_files = sorted(glob.glob(f"{results_dir}/**/matrix_product_state-CPU.json"), key=sort_helper)
     statevector_cpu_files = sorted(glob.glob(f"{results_dir}/**/statevector-CPU.json"), key=sort_helper)
 
-    
-    exit(0)
-
     # Generate summaries
-    summary_workload = [(mps_files, "mps"), (statevector_cpu_files, "statevector_cpu")]
+    summary_workload = [
+        (mps_files, "mps"),
+        (statevector_cpu_files, "statevector_cpu")
+    ]
     gates = ["ccx", "cx", "x", "h", "z", "u1", "u2", "u3"]
     overall_dfs = {}
 
@@ -212,6 +218,7 @@ if __name__ == "__main__":
         (files, name) = task
         overall_df = df_of_files(files)
         circuit_metrics_df = gate_counts_df_of_files(files, gates)
+        circuit_metrics_df[num_grover_iterations_header] = overall_df[num_grover_iterations_header]
         circuit_metrics_df[circuit_depth_after_transpilation_header] = overall_df[circuit_depth_after_transpilation_header]
         circuit_metrics_df[qubit_count_header] = overall_df[qubit_count_header]
         circuit_metrics_df["Total Gate count"] = circuit_metrics_df[gates].sum(axis=1)
@@ -220,6 +227,17 @@ if __name__ == "__main__":
         circuit_metrics_df.to_csv(results_dir / f"{name}_circuit_metrics_summary.csv")
 
         overall_dfs[name] = overall_df
+
+        # Write latex tables
+        circuit_metrics_df.to_latex(
+            results_dir / "tables" / f"circuit_metrics_{name}.tex",
+            column_format="|c|c||c|c|c|c|c|c|c|c||c|c|c|c|",
+            header=["Dimension", "Mismatches", "ccx", "cx", "x", "h", "z",
+                "u1", "u2", "u3", "Grover iterations", "Depth", "Qubits",
+                "Total gates"],
+            # hrules=True,
+            index=False
+        )
 
     # Generate plots
     plot_circuit_depth_v_tran_time_and_sim_time(
