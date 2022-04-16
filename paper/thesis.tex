@@ -530,7 +530,7 @@ three qubits.
   This proves the claim.
 \end{proof}
 
-\subsection{Results} \label{sec:results}
+\section{Results} \label{sec:results}
 
 QVMP specifies that we run $N = n^{\frac{1}{4}}$
 iterations of the Grover operator regardless of the number of solutions $m$. The
@@ -550,7 +550,7 @@ method allows for more efficient operations on circuits with relatively low
 entanglement. We were able to simulate the entirety of our desired input space
 using this method.
 
-\subsubsection{Functionality}
+\subsection{Functionality}
 
 \begin{figure}[h!]
   \centering
@@ -637,7 +637,7 @@ iterations to be close to the optimal.  The latter occurs when the number of
 optimal Grover iterations rounds down to zero. We handle this by running
 the algorithm on the dual problem, i.e., finding $j$ where $(Ay = z)_j$.
 
-\subsubsection{Circuit Metrics} \label{sec:circuit_metrics}
+\subsection{Circuit Metrics} \label{sec:circuit_metrics}
 
 \input{../results/tables/circuit_metrics.tex}
 
@@ -678,7 +678,7 @@ fully-connected.
 We can run QVMP on NISQ hardware. However, the input size is too small to
 observe any quantum advantage.
 
-\subsubsection{Transpilation and Simulation}
+\subsection{Transpilation and Simulation}
 
 \begin{figure}[h!]
   \begin{subfigure}{0.48\textwidth}
