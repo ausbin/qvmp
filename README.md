@@ -5,7 +5,7 @@
 You will need to have LaTeX and BibLaTeX installed.
 
 ```
-cd paper/thesis
+cd paper
 
 # Output build/thesis.pdf
 make pdf
