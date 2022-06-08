@@ -2,9 +2,12 @@
 
 \usetheme{simear}
 
+\newcommand{\arxivid}{FIXME:FIXME}
+\newcommand{\arxiveprint}{[arXiv:\arxivid]}
+
 \title{An Implementation of the Quantum Verification of Matrix Products Algorithm}
-\author{Elton Pinto}
-\date{\today}
+\author{Elton Pinto (Georgia Tech), \textbf{Austin Adams} (Georgia Tech), Eugene Dumitrescu (ORNL), Tom Conte (Georgia Tech)}
+\date{QRE 2022}
 
 \usepackage{algorithm}
 \usepackage{algpseudocode}
@@ -34,7 +37,7 @@
 \end{frame}
 
 
-\begin{frame}{Motivation (contd)}
+\begin{frame}{Motivation (cont'd)}
   \begin{itemize}
     \item Core of Grover search straightforward to implement
     \item {
@@ -347,10 +350,22 @@ def find_row_mismatch(A, y, z):
 %   \end{itemize}
 % \end{frame}
 
-\begin{frame}{End of talk}
-  \begin{centering}
-    Questions?
-  \end{centering}
+%\begin{frame}{End of talk}
+%  \begin{centering}
+%    Questions?
+%  \end{centering}
+%\end{frame}
+
+\begin{frame}
+  \centering \huge \textbf{Questions?}
+
+  \vspace{2cm}
+
+  \small
+  \begin{itemize}
+      \item Full paper on arXiv: \url{https://arxiv.org/abs/\arxivid}
+      \item Source code: \url{https://github.com/1ntEgr8/qvmp}
+  \end{itemize}
 \end{frame}
 
 \end{document}
